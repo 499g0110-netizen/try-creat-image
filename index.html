@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 圖片提示詞工具</title>
+
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      background: #111;
+      color: white;
+      margin-right: 10px;
+    }
+
+    .secondary {
+      background: #ddd;
+      color: #333;
+    }
+
+    .options button {
+      background: #eee;
+      color: #333;
+      margin: 4px;
+    }
+
+    .active {
+      background: #111 !important;
+      color: white !important;
+    }
+
+    .output {
+      background: #111;
+      color: #eee;
+      padding: 16px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      min-height: 200px;
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="card">
+    <h1 id="title">AI 圖片提示詞工具</h1>
+    <button onclick="demo()">套用範例</button>
+    <button class="secondary" onclick="clearAll()">清空</button>
+  </div>
+
+  <div class="card">
+    <label>工具名稱</label>
+    <input id="project" value="AI 圖片提示詞工具">
+
+    <label>主體</label>
+    <textarea id="subject"></textarea>
+
+    <label>場景</label>
+    <textarea id="scene"></textarea>
+
+    <label>細節</label>
+    <textarea id="details"></textarea>
+
+    <label>文字需求</label>
+    <input id="text" value="無文字">
+  </div>
+
+  <div class="card">
+    <label>風格</label>
+    <div class="options" id="style"></div>
+
+    <label>尺寸</label>
+    <div class="options" id="size"></div>
+
+    <label>光線</label>
+    <div class="options" id="light"></div>
+
+    <label>構圖</label>
+    <div class="options" id="camera"></div>
+
+    <label>氛圍</label>
+    <div class="options" id="mood"></div>
+
+    <label>排除項目</label>
+    <textarea id="negative"></textarea>
+  </div>
+
+  <div class="card">
+    <button onclick="copyPrompt()">複製提示詞</button>
+    <div class="output" id="output">請輸入內容</div>
+  </div>
+
+</div>
+
+<script>
+const state = {
+  style: "房地產高級寫實風",
+  size: "1040*1040",
+  light: "自然光",
+  camera: "正面視角",
+  mood: "高級"
+};
+
+const styles = [
+  "房地產高級寫實風",
+  "日本彩色漫畫風",
+  "Q版卡通風",
+  "手繪地圖風",
+  "極簡海報風"
+];
+
+const sizes = ["1040*1040","1920*1080","1080*1920","1600*1200"];
+const lights = ["自然光","晨光","黃昏光","電影光"];
+const cameras = ["正面視角","俯視","低角度","特寫"];
+const moods = ["高級","溫暖","熱血","夢幻"];
+
+function render(id, list, key){
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+  list.forEach(v=>{
+    const btn = document.createElement("button");
+    btn.innerText = v;
+    if(state[key]===v) btn.classList.add("active");
+    btn.onclick = ()=>{
+      state[key]=v;
+      renderAll();
+      update();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderAll(){
+  render("style",styles,"style");
+  render("size",sizes,"size");
+  render("light",lights,"light");
+  render("camera",cameras,"camera");
+  render("mood",moods,"mood");
+}
+
+function build(){
+  const subject = subjectEl.value;
+  const scene = sceneEl.value;
+  const details = detailsEl.value;
+  const text = textEl.value;
+  const negative = negativeEl.value;
+
+  return `
+Main subject: ${subject}
+Scene: ${scene}
+Details: ${details}
+Text: ${text}
+Style: ${state.style}
+Lighting: ${state.light}
+Camera: ${state.camera}
+Mood: ${state.mood}
+Size: ${state.size}
+
+Negative: ${negative || "blurry, bad anatomy, low quality"}
+`;
+}
+
+function update(){
+  document.getElementById("title").innerText = project.value;
+  document.getElementById("output").innerText = build();
+}
+
+function demo(){
+  project.value="和緯×海安 美食地圖";
+  subjectEl.value="台南北區美食地圖";
+  sceneEl.value="和緯路 海安路";
+  detailsEl.value="手繪風 大字體 中文日文";
+  textEl.value="標題+副標";
+  negativeEl.value="不要混亂";
+
+  state.style="手繪地圖風";
+  state.size="1600*1200";
+
+  renderAll();
+  update();
+}
+
+function clearAll(){
+  subjectEl.value="";
+  sceneEl.value="";
+  detailsEl.value="";
+  negativeEl.value="";
+  update();
+}
+
+function copyPrompt(){
+  navigator.clipboard.writeText(build());
+  alert("已複製");
+}
+
+const subjectEl=document.getElementById("subject");
+const sceneEl=document.getElementById("scene");
+const detailsEl=document.getElementById("details");
+const textEl=document.getElementById("text");
+const negativeEl=document.getElementById("negative");
+const project=document.getElementById("project");
+
+document.querySelectorAll("input,textarea").forEach(el=>{
+  el.addEventListener("input",update);
+});
+
+renderAll();
+update();
+</script>
+
+</body>
+</html>
